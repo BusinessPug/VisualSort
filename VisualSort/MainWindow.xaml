@@ -1,0 +1,33 @@
+﻿<Window x:Class="VisualSort.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Sorting Visualizer">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <!-- Canvas area -->
+            <RowDefinition Height="Auto" />
+            <!-- Buttons and controls area -->
+        </Grid.RowDefinitions>
+
+        <!-- Viewbox to scale the Canvas -->
+        <Viewbox Grid.Row="0" Margin="10">
+            <Canvas Name="arrayCanvas" Background="White" Width="780" Height="300" />
+        </Viewbox>
+
+        <!-- StackPanel for buttons and controls -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10">
+            <Button Name="startButton" Content="Start" Width="75" Margin="0,0,10,0" Click="StartButton_Click"/>
+            <ComboBox Name="sortMethodComboBox" Width="120">
+                <ComboBoxItem Content="Bubble Sort"/>
+                <ComboBoxItem Content="Gnome Sort"/>
+                <ComboBoxItem Content="Cocktail Shaker Sort"/>
+            </ComboBox>
+            <Slider Name="speedSlider" Width="200" Margin="10,0,0,0" Minimum="0.1" Maximum="100" Value="50"/>
+            <Button Name="shuffleButton" Content="Shuffle" Width="75" Margin="10,0,0,0" Click="ShuffleButton_Click"/>
+            <Button Name="abortButton" Content="Abort" Width="75" Margin="10,0,0,0" Click="AbortButton_Click"/>
+            <TextBox Name="arraySizeTextBox" Width="50" Margin="10,0,0,0" ToolTip="Enter array size"/>
+            <Button Content="Set Size" Width="75" Margin="10,0,0,0" Click="SetArraySize_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>
