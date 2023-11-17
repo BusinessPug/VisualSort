@@ -115,6 +115,20 @@ namespace VisualSort
 
         }
 
+        private void StartSort()
+        {
+            startButton.IsEnabled = false;
+            abortButton.IsEnabled = true;
+            shuffleButton.IsEnabled = false;
+            speedSlider.IsEnabled = false;
+            sortMethodComboBox.IsEnabled = false;
+            abortSorting = false;
+        }
+
+        private async void CurrentDelay()
+        {
+            await Task.Delay(1);
+        }
 
 
         private void StartButton_Click(object sender, RoutedEventArgs e)
@@ -143,12 +157,8 @@ namespace VisualSort
         private async void BubbleSort()
         {
 
-            startButton.IsEnabled = false;
-            abortButton.IsEnabled = true;
-            shuffleButton.IsEnabled = false;
-            speedSlider.IsEnabled = false;
-            sortMethodComboBox.IsEnabled = false;
-            abortSorting = false;
+            StartSort();
+
             int n = array.Length;
             int updateFrequency = Math.Max(1, (int)(n / (speedSlider.Value + 1))); // Example: Update UI after every 5% of the array length
 
@@ -176,7 +186,7 @@ namespace VisualSort
                     if (j % updateFrequency == 0)
                     {
                         Dispatcher.Invoke(() => UpdateCanvas(j, j + 1, resetColor: true));
-                        await Task.Delay(1); // Minimal delay
+                        CurrentDelay();
                     }
                 }
             }
@@ -190,12 +200,7 @@ namespace VisualSort
 
         private async void GnomeSort()
         {
-            startButton.IsEnabled = false;
-            shuffleButton.IsEnabled = false;
-            abortButton.IsEnabled = true;
-            speedSlider.IsEnabled = false;
-            sortMethodComboBox.IsEnabled = false;
-            abortSorting = false;
+            StartSort();
 
             int n = array.Length;
             int updateFrequency = Math.Max(1, (int)(n / (speedSlider.Value + 1)));
@@ -227,7 +232,7 @@ namespace VisualSort
                     if (index % updateFrequency == 0 || index == 0)
                     {
                         Dispatcher.Invoke(() => UpdateCanvas(Math.Max(0, index - 1), index, resetColor: true));
-                        await Task.Delay(1);
+                        CurrentDelay();
                     }
                 }
                 
@@ -242,12 +247,7 @@ namespace VisualSort
 
         private async void CocktailShakerSort()
         {
-            startButton.IsEnabled = false;
-            shuffleButton.IsEnabled = false;
-            abortButton.IsEnabled = true;
-            speedSlider.IsEnabled = false;
-            sortMethodComboBox.IsEnabled = false;
-            abortSorting = false;
+            StartSort();
             int n = array.Length;
             int updateFrequency = Math.Max(1, (int)(n / (speedSlider.Value + 1)));
             bool swapped;
@@ -277,7 +277,7 @@ namespace VisualSort
                     if (i % updateFrequency == 0 || i == n - 2)
                     {
                         Dispatcher.Invoke(() => UpdateCanvas(i, i + 1, resetColor: true));
-                        await Task.Delay(1);
+                        CurrentDelay();
                     }
                 }
 
@@ -297,7 +297,7 @@ namespace VisualSort
                     if (i % updateFrequency == 0 || i == 0)
                     {
                         Dispatcher.Invoke(() => UpdateCanvas(i, i + 1, resetColor: true));
-                        await Task.Delay(1);
+                        CurrentDelay();
                     }
                 }
             } while (swapped);

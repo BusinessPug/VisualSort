@@ -23,7 +23,7 @@
                 <ComboBoxItem Content="Gnome Sort"/>
                 <ComboBoxItem Content="Cocktail Shaker Sort"/>
             </ComboBox>
-            <Slider Name="speedSlider" Width="200" Margin="10,0,0,0" Minimum="0.1" Maximum="100" Value="50"/>
+            <Slider Name="speedSlider" Width="200" Margin="10,0,0,0" Minimum="0.1" Maximum="250" Value="125"/>
             <Button Name="shuffleButton" Content="Shuffle" Width="75" Margin="10,0,0,0" Click="ShuffleButton_Click"/>
             <Button Name="abortButton" Content="Abort" Width="75" Margin="10,0,0,0" Click="AbortButton_Click"/>
             <TextBox Name="arraySizeTextBox" Width="50" Margin="10,0,0,0" ToolTip="Enter array size"/>
