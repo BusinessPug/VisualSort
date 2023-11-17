@@ -133,8 +133,11 @@ namespace VisualSort
                 case "Cocktail Shaker Sort":
                     CocktailShakerSort();
                     break;
-                case "Radix Sort":
+                case "Radix Sort Base 10":
                     RadixSort();
+                    break;
+                case "Radix Sort Base 4":
+                    RadixSortBase4();
                     break;
                 case "Comb Sort":
                     CombSort();
@@ -389,6 +392,84 @@ namespace VisualSort
                 }
             }
         }
+
+        private async void RadixSortBase4()
+        {
+            StartSort();
+
+            int n = array.Length;
+            int m = GetMax(array); 
+            int baseNumber = 4;    
+
+            for (int exp = 1; m / exp > 0; exp *= baseNumber)
+            {
+                await CountSortVisualizationBase4(array, n, exp);
+
+                if (abortSorting)
+                {
+                    ShuffleArray();
+                    DrawArray();
+                    ResetUI();
+                    return;
+                }
+            }
+
+            if (!abortSorting)
+            {
+                DrawArray();
+                ResetUI();
+            }
+        }
+
+        private async Task CountSortVisualizationBase4(int[] arr, int n, int exp)
+        {
+            int[] output = new int[n];
+            int[] count = new int[4];
+            for (int i = 0; i < n; i++)
+            {
+                int index = (arr[i] / exp) % 4;
+                count[index]++;
+            }
+
+            for (int i = 1; i < 4; i++)
+                count[i] += count[i - 1];
+
+            for (int i = n - 1; i >= 0; i--)
+            {
+                int index = (arr[i] / exp) % 4;
+                output[count[index] - 1] = arr[i];
+                count[index]--;
+
+                Dispatcher.Invoke(() => UpdateCanvas(i, count[index]));
+                await Task.Delay((int)speedSlider.Value / 2);
+            }
+
+            for (int i = 0; i < n; i++)
+            {
+                if (arr[i] != output[i])
+                {
+                    int targetIndex = FindInArray(arr, output[i], i, n);
+                    int temp = arr[i];
+                    arr[i] = arr[targetIndex];
+                    arr[targetIndex] = temp;
+
+                    Dispatcher.Invoke(() => UpdateCanvas(i, targetIndex));
+                    await Task.Delay((int)speedSlider.Value / 2);
+                }
+            }
+        }
+
+        private int FindInArray(int[] arr, int value, int start, int end)
+        {
+            for (int i = start; i < end; i++)
+            {
+                if (arr[i] == value)
+                    return i;
+            }
+            return -1;
+        }
+
+
 
         private async void CombSort()
         {

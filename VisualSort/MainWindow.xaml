@@ -22,7 +22,8 @@
                 <ComboBoxItem Content="Bubble Sort"/>
                 <ComboBoxItem Content="Gnome Sort"/>
                 <ComboBoxItem Content="Cocktail Shaker Sort"/>
-                <ComboBoxItem Content="Radix Sort"/>
+                <ComboBoxItem Content="Radix Sort Base 10"/>
+                <ComboBoxItem Content="Radix Sort Base 4"/>
                 <ComboBoxItem Content="Comb Sort"/>
                 <ComboBoxItem Content="Bogo Sort"/>
             </ComboBox>
