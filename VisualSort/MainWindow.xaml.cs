@@ -378,8 +378,12 @@ namespace VisualSort
             {
                 if (arr[i] != output[i])
                 {
-                    int targetIndex = Array.IndexOf(output, arr[i], i);
-                    arr[i] = output[i];
+                    int targetIndex = Array.IndexOf(arr, output[i], i); 
+                                                                        
+                    int temp = arr[i];
+                    arr[i] = arr[targetIndex];
+                    arr[targetIndex] = temp;
+
                     Dispatcher.Invoke(() => UpdateCanvas(i, targetIndex));
                     await Task.Delay((int)speedSlider.Value / 2);
                 }
