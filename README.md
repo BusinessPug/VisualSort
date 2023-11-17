@@ -6,14 +6,12 @@ Description
 
 This Sorting Visualizer is a Windows Presentation Foundation (WPF) application designed to visually demonstrate various sorting algorithms. It allows users to see the step-by-step process of sorting algorithms, making it a useful educational tool for understanding how different algorithms approach the task of sorting.
 
-
 Features
 
 Visualize Sorting Algorithms: Watch how different sorting algorithms organize data.
 Interactive Controls: Choose from various sorting algorithms, control sorting speed, and shuffle the data.
 Dynamic Array Size: Set the size of the array to be sorted.
 Responsive UI: Elements scale with the window size for a consistent experience on different screen sizes.
-
 
 Sorting Algorithms
 
@@ -22,6 +20,8 @@ The application includes the following sorting algorithms:
 Bubble Sort
 Gnome Sort
 Cocktail Shaker Sort
+Radix Sort
+Bogo Sort
 
 How to Use
 
