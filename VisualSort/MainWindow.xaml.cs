@@ -322,7 +322,35 @@ namespace VisualSort
 
             return arr.Max();
         }
-        private void CountSort(int[] arr, int n, int exp, int updateFrequency, ref int operationCount)
+
+        private async void RadixSort()
+        {
+            StartSort();
+
+            int n = array.Length;
+            int m = GetMax(array);
+
+            for (int exp = 1; m / exp > 0; exp *= 10)
+            {
+                await CountSortVisualization(array, n, exp);
+
+                if (abortSorting)
+                {
+                    ShuffleArray();
+                    DrawArray();
+                    ResetUI();
+                    return;
+                }
+            }
+
+            if (!abortSorting)
+            {
+                DrawArray();
+                ResetUI();
+            }
+        }
+
+        private async Task CountSortVisualization(int[] arr, int n, int exp)
         {
             int[] output = new int[n];
             int[] count = new int[10];
@@ -341,51 +369,20 @@ namespace VisualSort
                 int index = (arr[i] / exp) % 10;
                 output[count[index] - 1] = arr[i];
                 count[index]--;
+
+                Dispatcher.Invoke(() => UpdateCanvas(i, count[index]));
+                await Task.Delay((int)speedSlider.Value / 2);
             }
 
             for (int i = 0; i < n; i++)
-                arr[i] = output[i];
-
-            operationCount++;
-            if (operationCount % updateFrequency == 0)
             {
-                Dispatcher.Invoke(() => DrawArray());
-
-            }
-        }
-
-        private async void RadixSort()
-        {
-            StartSort();
-
-            int n = array.Length;
-            int m = GetMax(array);
-            int updateFrequency = Math.Max(1, (int)((100 - speedSlider.Value + 1) * (n / 100.0)));
-
-            int operationCount = 0;
-
-            for (int exp = 1; m / exp > 0; exp *= 10)
-            {
-                CountSort(array, n, exp, updateFrequency, ref operationCount);
-
-                if (abortSorting)
+                if (arr[i] != output[i])
                 {
-                    ShuffleArray();
-                    DrawArray();
-                    ResetUI();
-                    return;
+                    int targetIndex = Array.IndexOf(output, arr[i], i);
+                    arr[i] = output[i];
+                    Dispatcher.Invoke(() => UpdateCanvas(i, targetIndex));
+                    await Task.Delay((int)speedSlider.Value / 2);
                 }
-
-                Dispatcher.Invoke(() => DrawArray());
-                await Task.Delay(1000);
-
-
-            }
-
-            if (!abortSorting)
-            {
-                DrawArray();
-                ResetUI();
             }
         }
 
@@ -461,7 +458,6 @@ namespace VisualSort
                     return;
                 }
 
-                // Shuffle the array
                 for (int i = 0; i < n; i++)
                 {
                     int j = rnd.Next(i, n);
@@ -473,7 +469,7 @@ namespace VisualSort
                     if (operationCount % updateFrequency == 0)
                     {
                         Dispatcher.Invoke(() => UpdateCanvas(i, i + 1));
-                        await Task.Delay((int)speedSlider.Value / 2); // Minimal delay for visualization
+                        await Task.Delay((int)speedSlider.Value / 2);
                         Dispatcher.Invoke(() => UpdateCanvas(i, i + 1, resetColor: true));
                     }
                 }
@@ -481,7 +477,7 @@ namespace VisualSort
 
             if (!abortSorting)
             {
-                DrawArray(); // Final draw to ensure sorted state is shown
+                DrawArray();
                 ResetUI();
             }
         }
