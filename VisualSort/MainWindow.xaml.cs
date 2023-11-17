@@ -8,7 +8,6 @@ namespace VisualSort
     public partial class MainWindow : Window
     {
         private int[] array;
-        private const int MaxValue = 100; // Maximum value for array elements
         private int ArraySize = 256;
         private bool abortSorting = false;
         public MainWindow()
@@ -85,14 +84,11 @@ namespace VisualSort
             }
         }
 
-
         private void ShuffleButton_Click(object sender, RoutedEventArgs e)
         {
             ShuffleArray();
             DrawArray();
         }
-
-
 
         private void AbortButton_Click(object sender, RoutedEventArgs e)
         {
@@ -121,8 +117,6 @@ namespace VisualSort
             setsize.IsEnabled = false;
             arraySizeTextBox.IsEnabled = false;
         }
-
-
 
         private void StartButton_Click(object sender, RoutedEventArgs e)
         {
@@ -196,7 +190,6 @@ namespace VisualSort
             }
         }
 
-
         private async void GnomeSort()
         {
             StartSort();
@@ -243,7 +236,6 @@ namespace VisualSort
                 ResetUI();
             }
         }
-
 
         private async void CocktailShakerSort()
         {
@@ -324,7 +316,6 @@ namespace VisualSort
                 ResetUI();
             }
         }
-
 
         private int GetMax(int[] arr)
         {
@@ -504,7 +495,6 @@ namespace VisualSort
             }
             return true;
         }
-
 
         private void UpdateCanvas(int index1, int index2, bool resetColor = false)
         {
