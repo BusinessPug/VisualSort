@@ -158,7 +158,6 @@ namespace VisualSort
         {
 
             StartSort();
-
             int n = array.Length;
             int updateFrequency = Math.Max(1, (int)(n / (speedSlider.Value + 1))); // Example: Update UI after every 5% of the array length
 
