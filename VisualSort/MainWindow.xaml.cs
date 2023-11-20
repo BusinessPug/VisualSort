@@ -1,4 +1,6 @@
-﻿using System.Windows;
+﻿using NAudio.Wave.SampleProviders;
+using NAudio.Wave;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
@@ -118,6 +120,7 @@ namespace VisualSort
             arraySizeTextBox.IsEnabled = false;
         }
 
+
         private void StartButton_Click(object sender, RoutedEventArgs e)
         {
             ComboBoxItem selectedItem = ((ComboBoxItem)sortMethodComboBox.SelectedItem);
@@ -144,6 +147,9 @@ namespace VisualSort
                     break;
                 case "Bogo Sort":
                     BogoSort();
+                    break;
+                case "Quick Sort":
+                    QuickSort();
                     break;
                 default:
                     MessageBox.Show("Please select a sorting algorithm.");
@@ -575,6 +581,63 @@ namespace VisualSort
                     return false;
             }
             return true;
+        }
+
+        private async void QuickSort()
+        {
+            StartSort();
+            await QuickSortRecursive(array, 0, array.Length - 1);
+
+            if (!abortSorting)
+            {
+                DrawArray(); 
+                ResetUI();
+            }
+        }
+
+        private async Task QuickSortRecursive(int[] arr, int low, int high)
+        {
+            if (low < high)
+            {
+                int pi = await Partition(arr, low, high);
+
+                await QuickSortRecursive(arr, low, pi - 1);
+                await QuickSortRecursive(arr, pi + 1, high);
+            }
+        }
+
+        private async Task<int> Partition(int[] arr, int low, int high)
+        {
+            int pivot = arr[high];
+            int i = (low - 1);
+
+            for (int j = low; j <= high - 1; j++)
+            {
+                if (arr[j] < pivot)
+                {
+                    i++;
+                    int temp = arr[i];
+                    arr[i] = arr[j];
+                    arr[j] = temp;
+
+                    Dispatcher.Invoke(() => UpdateCanvas(i, j));
+                    await Task.Delay((int)speedSlider.Value / 2);
+                }
+
+                if (abortSorting)
+                {
+                    return -1; // Early exit if sorting is aborted
+                }
+            }
+
+            int temp1 = arr[i + 1];
+            arr[i + 1] = arr[high];
+            arr[high] = temp1;
+
+            Dispatcher.Invoke(() => UpdateCanvas(i + 1, high));
+            await Task.Delay((int)speedSlider.Value / 2);
+
+            return i + 1;
         }
 
         private void UpdateCanvas(int index1, int index2, bool resetColor = false)

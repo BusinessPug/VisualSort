@@ -26,6 +26,7 @@
                 <ComboBoxItem Content="Radix Sort Base 4"/>
                 <ComboBoxItem Content="Comb Sort"/>
                 <ComboBoxItem Content="Bogo Sort"/>
+                <ComboBoxItem Content="Quick Sort"/>
             </ComboBox>
             <Slider Name="speedSlider" Width="200" Margin="10,0,0,0" Minimum="2" Maximum="100" Value="51"/>
             <Button Name="shuffleButton" Content="Shuffle" Width="75" Margin="10,0,0,0" Click="ShuffleButton_Click"/>
