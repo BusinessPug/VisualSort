@@ -20,7 +20,9 @@ The application includes the following sorting algorithms:
 Bubble Sort
 Gnome Sort
 Cocktail Shaker Sort
-Radix Sort
+Radix Sort base 10
+Radix Sort base 4
+Comb Sort
 Bogo Sort
 
 How to Use
