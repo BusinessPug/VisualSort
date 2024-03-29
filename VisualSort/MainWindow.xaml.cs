@@ -7,6 +7,11 @@ using System.Windows.Shapes;
 
 namespace VisualSort
 {
+
+// TODO: Place each sorting algorithm in their own file and class.
+// clean up the code
+// take a look at the sound
+
     public partial class MainWindow : Window
     {
         private int[] array;
