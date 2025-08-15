@@ -1,670 +1,171 @@
-﻿using NAudio.Wave.SampleProviders;
-using NAudio.Wave;
+﻿using System.ComponentModel;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using VisualSort.Helpers;
+using VisualSort.ViewModels;
 
 namespace VisualSort
 {
-
-// TODO: Place each sorting algorithm in their own file and class.
-// clean up the code
-// take a look at the sound
-
     public partial class MainWindow : Window
     {
-        private int[] array;
-        private int ArraySize = 256;
-        private bool abortSorting = false;
+        private MainViewModel _vm;
+        private readonly Path _barsPath = new() { Fill = Brushes.DodgerBlue, SnapsToDevicePixels = true };
+        private readonly Path _finishedPath = new() { Fill = Brushes.LimeGreen, SnapsToDevicePixels = true };
+        private readonly Path _focusedPath = new() { Fill = Brushes.Red, SnapsToDevicePixels = true };
+        private bool _renderOnce;
+
         public MainWindow()
         {
             InitializeComponent();
-            this.Loaded += MainWindow_Loaded;
+
+            DataContextChanged += OnDataContextChanged;
+            Loaded += (_, __) =>
+            {
+                HookViewModel();
+
+                arrayCanvas.Children.Clear();
+                arrayCanvas.Children.Add(_barsPath);
+                arrayCanvas.Children.Add(_finishedPath); // green overlay between blue and red
+                arrayCanvas.Children.Add(_focusedPath);
+
+                _renderOnce = true;
+                RenderArray();
+            };
+
+            arrayCanvas.SizeChanged += (_, __) =>
+            {
+                _renderOnce = true;
+                RenderArray();
+            };
+
+            CompositionTarget.Rendering += OnRendering;
         }
 
-        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        private void OnRendering(object sender, System.EventArgs e)
         {
-            ArraySize = 256; // Set the initial size of the array
-            InitializeArray(); // Initialize the array with 256 elements
-            DrawArray(); // Draw the array on the canvas
-        }
+            if (_vm == null) return;
 
-
-        private void SetArraySize_Click(object sender, RoutedEventArgs e)
-        {
-            if (int.TryParse(arraySizeTextBox.Text, out int newSize) && newSize > 0)
+            if (_vm.IsSorting || _vm.ConsumeRenderRequest() || _renderOnce)
             {
-                ArraySize = newSize;
-                InitializeArray();   // Re-initialize the array with consecutive values
-                DrawArray();         // Redraw the array
-            }
-            else
-            {
-                MessageBox.Show("Please enter a valid array size.");
-            }
-        }
-
-
-        private void InitializeArray()
-        {
-            array = new int[ArraySize];
-            for (int i = 0; i < ArraySize; i++)
-            {
-                array[i] = i + 1; // Fill the array with consecutive numbers
-            }
-            ShuffleArray(); // Shuffle the array to randomize the order
-        }
-
-        private void ShuffleArray()
-        {
-            Random rnd = new Random();
-            for (int i = array.Length - 1; i > 0; i--)
-            {
-                int j = rnd.Next(i + 1);
-                int temp = array[i];
-                array[i] = array[j];
-                array[j] = temp;
+                _renderOnce = false;
+                RenderArray();
             }
         }
 
-
-        private void DrawArray()
+        private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
         {
-            arrayCanvas.Children.Clear();
-            double canvasWidth = arrayCanvas.ActualWidth; // Use the actual width of the canvas
-            double canvasHeight = arrayCanvas.ActualHeight; // Use the actual height of the canvas
-            double barWidth = canvasWidth / ArraySize; // Calculate bar width based on array size
+            UnhookViewModel(e.OldValue as MainViewModel);
+            HookViewModel();
+            _renderOnce = true;
+            RenderArray();
+        }
 
-            for (int i = 0; i < ArraySize; i++)
+        private void HookViewModel()
+        {
+            _vm = DataContext as MainViewModel;
+            if (_vm != null)
             {
-                Rectangle rect = new Rectangle
-                {
-                    Width = barWidth,
-                    Height = (array[i] / (double)ArraySize) * canvasHeight, // Scale height to fit canvas
-                    Fill = Brushes.Blue
-                };
-
-                Canvas.SetLeft(rect, i * barWidth);
-                Canvas.SetBottom(rect, 0);
-                arrayCanvas.Children.Add(rect);
+                _vm.PropertyChanged += OnViewModelPropertyChanged;
+                ToneService.SetEnabled(_vm.AudioEnabled);
             }
         }
 
-        private void ShuffleButton_Click(object sender, RoutedEventArgs e)
+        private void UnhookViewModel(MainViewModel oldVm)
         {
-            ShuffleArray();
-            DrawArray();
-        }
-
-        private void AbortButton_Click(object sender, RoutedEventArgs e)
-        {
-            abortSorting = true;
-        }
-
-        private void ResetUI()
-        {
-            startButton.IsEnabled = true;
-            abortButton.IsEnabled = false;
-            shuffleButton.IsEnabled = true;
-            sortMethodComboBox.IsEnabled = true;
-            speedSlider.IsEnabled = true;
-            setsize.IsEnabled = true;
-            arraySizeTextBox.IsEnabled = true;
-        }
-
-        private void StartSort()
-        {
-            startButton.IsEnabled = false;
-            abortButton.IsEnabled = true;
-            shuffleButton.IsEnabled = false;
-            speedSlider.IsEnabled = false;
-            sortMethodComboBox.IsEnabled = false;
-            abortSorting = false;
-            setsize.IsEnabled = false;
-            arraySizeTextBox.IsEnabled = false;
-        }
-
-
-        private void StartButton_Click(object sender, RoutedEventArgs e)
-        {
-            ComboBoxItem selectedItem = ((ComboBoxItem)sortMethodComboBox.SelectedItem);
-            string selectedAlgorithm = selectedItem.Content.ToString();
-            switch (selectedAlgorithm)
+            if (oldVm != null)
             {
-                case "Bubble Sort":
-                    BubbleSort();
-                    break;
-                case "Gnome Sort":
-                    GnomeSort();
-                    break;
-                case "Cocktail Shaker Sort":
-                    CocktailShakerSort();
-                    break;
-                case "Radix Sort Base 10":
-                    RadixSort();
-                    break;
-                case "Radix Sort Base 4":
-                    RadixSortBase4();
-                    break;
-                case "Comb Sort":
-                    CombSort();
-                    break;
-                case "Bogo Sort":
-                    BogoSort();
-                    break;
-                case "Quick Sort":
-                    QuickSort();
-                    break;
-                default:
-                    MessageBox.Show("Please select a sorting algorithm.");
-                    break;
+                oldVm.PropertyChanged -= OnViewModelPropertyChanged;
             }
         }
 
-        private async void BubbleSort()
+        private void OnViewModelPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-
-            StartSort();
-            int n = array.Length;
-            int updateFrequency = Math.Max(1, (int)(n / (speedSlider.Value + 1)));
-
-            for (int i = 0; i < n - 1; i++)
+            if (e.PropertyName == nameof(MainViewModel.IsSorting))
             {
-                for (int j = 0; j < n - i - 1; j++)
-                {
-                    if (abortSorting)
-                    {
-                        ShuffleArray();
-                        DrawArray();
-                        ResetUI();
-                        return;
-                    }
-
-                    if (array[j] > array[j + 1])
-                    {
-
-                        int temp = array[j];
-                        array[j] = array[j + 1];
-                        array[j + 1] = temp;
-                    }
-
-                    if (j % updateFrequency == 0)
-                    {
-                        Dispatcher.Invoke(() => UpdateCanvas(j, j + 1));
-                        await Task.Delay((int)speedSlider.Value / 2);
-                        Dispatcher.Invoke(() => UpdateCanvas(j, j + 1, resetColor: true));
-                    }
-                }
+                _renderOnce = true;
             }
-            if (!abortSorting)
+            else if (e.PropertyName == nameof(MainViewModel.AudioEnabled))
             {
-                DrawArray();
-                ResetUI();
+                ToneService.SetEnabled(_vm.AudioEnabled);
             }
         }
 
-        private async void GnomeSort()
+        private void RenderArray()
         {
-            StartSort();
-
-            int n = array.Length;
-            int updateFrequency = Math.Max(1, (int)(n / (speedSlider.Value + 1)));
-
-            int index = 0;
-            while (index < n)
+            if (_vm == null || _vm.Array == null || _vm.Array.Length == 0)
             {
-                if (abortSorting)
-                {
-                    ShuffleArray();
-                    DrawArray();
-                    ResetUI();
-                    return;
-                }
-
-                if (index == 0 || array[index] >= array[index - 1])
-                {
-                    index++;
-                }
-                else
-                {
-
-                    int temp = array[index];
-                    array[index] = array[index - 1];
-                    array[index - 1] = temp;
-
-                    index--;
-
-                    if (index % updateFrequency == 0 || index == 0)
-                    {
-                        Dispatcher.Invoke(() => UpdateCanvas(Math.Max(0, index - 1), index));
-                        await Task.Delay((int)speedSlider.Value / 2);
-                        Dispatcher.Invoke(() => UpdateCanvas(Math.Max(0, index - 1), index, resetColor: true));
-                    }
-                }
-
-            }
-            if (!abortSorting)
-            {
-                DrawArray();
-                ResetUI();
-            }
-        }
-
-        private async void CocktailShakerSort()
-        {
-            StartSort();
-            int n = array.Length;
-            int updateFrequency = Math.Max(1, (int)(n / (speedSlider.Value + 1)));
-            bool swapped;
-
-            do
-            {
-                if (abortSorting)
-                {
-                    ShuffleArray();
-                    DrawArray();
-                    ResetUI();
-                    return;
-                }
-
-                swapped = false;
-                // Forward pass
-                for (int i = 0; i < n - 1; i++)
-                {
-                    if (array[i] > array[i + 1])
-                    {
-                        int temp = array[i];
-                        array[i] = array[i + 1];
-                        array[i + 1] = temp;
-                        swapped = true;
-                    }
-
-                    if (i % updateFrequency == 0 || i == n - 2)
-                    {
-                        if (abortSorting)
-                        {
-                            ShuffleArray();
-                            DrawArray();
-                            ResetUI();
-                            return;
-                        }
-                        Dispatcher.Invoke(() => UpdateCanvas(i, i + 1));
-                        await Task.Delay((int)speedSlider.Value / 2);
-                        Dispatcher.Invoke(() => UpdateCanvas(i, i + 1, resetColor: true));
-                    }
-                }
-
-                if (!swapped) break;
-
-                // Backward pass
-                for (int i = n - 2; i >= 0; i--)
-                {
-                    if (array[i] > array[i + 1])
-                    {
-                        int temp = array[i];
-                        array[i] = array[i + 1];
-                        array[i + 1] = temp;
-                        swapped = true;
-                    }
-
-                    if (i % updateFrequency == 0 || i == 0)
-                    {
-                        if (abortSorting)
-                        {
-                            ShuffleArray();
-                            DrawArray();
-                            ResetUI();
-                            return;
-                        }
-                        Dispatcher.Invoke(() => UpdateCanvas(i, i + 1));
-                        await Task.Delay((int)speedSlider.Value / 2);
-                        Dispatcher.Invoke(() => UpdateCanvas(i, i + 1, resetColor: true));
-                    }
-                }
-            } while (swapped);
-
-            if (!abortSorting)
-            {
-                DrawArray();
-                ResetUI();
-            }
-        }
-
-        private int GetMax(int[] arr)
-        {
-
-            return arr.Max();
-        }
-
-        private async void RadixSort()
-        {
-            StartSort();
-
-            int n = array.Length;
-            int m = GetMax(array);
-
-            for (int exp = 1; m / exp > 0; exp *= 10)
-            {
-                await CountSortVisualization(array, n, exp);
-
-                if (abortSorting)
-                {
-                    ShuffleArray();
-                    DrawArray();
-                    ResetUI();
-                    return;
-                }
+                _barsPath.Data = null;
+                _finishedPath.Data = null;
+                _focusedPath.Data = null;
+                return;
             }
 
-            if (!abortSorting)
+            double width = arrayCanvas.ActualWidth;
+            double height = arrayCanvas.ActualHeight;
+            if (width <= 0 || height <= 0)
             {
-                DrawArray();
-                ResetUI();
-            }
-        }
-
-        private async Task CountSortVisualization(int[] arr, int n, int exp)
-        {
-            int[] output = new int[n];
-            int[] count = new int[10];
-
-            for (int i = 0; i < n; i++)
-            {
-                int index = (arr[i] / exp) % 10;
-                count[index]++;
+                _barsPath.Data = null;
+                _finishedPath.Data = null;
+                _focusedPath.Data = null;
+                return;
             }
 
-            for (int i = 1; i < 10; i++)
-                count[i] += count[i - 1];
-
-            for (int i = n - 1; i >= 0; i--)
+            var data = _vm.Array;
+            int n = data.Length;
+            int maxVal = data.Max();
+            if (maxVal <= 0)
             {
-                int index = (arr[i] / exp) % 10;
-                output[count[index] - 1] = arr[i];
-                count[index]--;
-
-                Dispatcher.Invoke(() => UpdateCanvas(i, count[index]));
-                await Task.Delay((int)speedSlider.Value / 2);
+                _barsPath.Data = null;
+                _finishedPath.Data = null;
+                _focusedPath.Data = null;
+                return;
             }
 
-            for (int i = 0; i < n; i++)
+            double barWidth = width / n;
+            if (barWidth < 1) barWidth = 1;
+
+            var blueGeom = new StreamGeometry();
+            var greenGeom = new StreamGeometry();
+            var redGeom = new StreamGeometry();
+
+            using (var bctx = blueGeom.Open())
+            using (var gctx = greenGeom.Open())
+            using (var rctx = redGeom.Open())
             {
-                if (arr[i] != output[i])
-                {
-                    int targetIndex = Array.IndexOf(arr, output[i], i); 
-                                                                        
-                    int temp = arr[i];
-                    arr[i] = arr[targetIndex];
-                    arr[targetIndex] = temp;
-
-                    Dispatcher.Invoke(() => UpdateCanvas(i, targetIndex));
-                    await Task.Delay((int)speedSlider.Value / 2);
-                }
-            }
-        }
-
-        private async void RadixSortBase4()
-        {
-            StartSort();
-
-            int n = array.Length;
-            int m = GetMax(array); 
-            int baseNumber = 4;    
-
-            for (int exp = 1; m / exp > 0; exp *= baseNumber)
-            {
-                await CountSortVisualizationBase4(array, n, exp);
-
-                if (abortSorting)
-                {
-                    ShuffleArray();
-                    DrawArray();
-                    ResetUI();
-                    return;
-                }
-            }
-
-            if (!abortSorting)
-            {
-                DrawArray();
-                ResetUI();
-            }
-        }
-
-        private async Task CountSortVisualizationBase4(int[] arr, int n, int exp)
-        {
-            int[] output = new int[n];
-            int[] count = new int[4];
-            for (int i = 0; i < n; i++)
-            {
-                int index = (arr[i] / exp) % 4;
-                count[index]++;
-            }
-
-            for (int i = 1; i < 4; i++)
-                count[i] += count[i - 1];
-
-            for (int i = n - 1; i >= 0; i--)
-            {
-                int index = (arr[i] / exp) % 4;
-                output[count[index] - 1] = arr[i];
-                count[index]--;
-
-                Dispatcher.Invoke(() => UpdateCanvas(i, count[index]));
-                await Task.Delay((int)speedSlider.Value / 2);
-            }
-
-            for (int i = 0; i < n; i++)
-            {
-                if (arr[i] != output[i])
-                {
-                    int targetIndex = FindInArray(arr, output[i], i, n);
-                    int temp = arr[i];
-                    arr[i] = arr[targetIndex];
-                    arr[targetIndex] = temp;
-
-                    Dispatcher.Invoke(() => UpdateCanvas(i, targetIndex));
-                    await Task.Delay((int)speedSlider.Value / 2);
-                }
-            }
-        }
-
-        private int FindInArray(int[] arr, int value, int start, int end)
-        {
-            for (int i = start; i < end; i++)
-            {
-                if (arr[i] == value)
-                    return i;
-            }
-            return -1;
-        }
-
-
-
-        private async void CombSort()
-        {
-            StartSort();
-
-            int n = array.Length;
-            int updateFrequency = Math.Max(1, (int)(n / (speedSlider.Value + 100)));
-            int operationCount = 0;
-            float shrinkFactor = 1.3f;
-            int gap = n;
-            bool swapped = true;
-
-            while (gap != 1 || swapped)
-            {
-                gap = (int)(gap / shrinkFactor);
-                if (gap < 1)
-                    gap = 1;
-
-                swapped = false;
-                for (int i = 0; i < n - gap; i++)
-                {
-                    if (array[i] > array[i + gap])
-                    {
-                        int temp = array[i];
-                        array[i] = array[i + gap];
-                        array[i + gap] = temp;
-                        swapped = true;
-
-                        operationCount++;
-                        if (operationCount % updateFrequency == 0)
-                        {
-                            Dispatcher.Invoke(() => UpdateCanvas(i, i + gap));
-                            await Task.Delay((int)speedSlider.Value / 2);
-                            Dispatcher.Invoke(() => UpdateCanvas(i, i + gap, resetColor: true));
-                        }
-                    }
-                }
-
-                if (abortSorting)
-                {
-                    ShuffleArray();
-                    DrawArray();
-                    ResetUI();
-                    return;
-                }
-            }
-
-            if (!abortSorting)
-            {
-                DrawArray();
-                ResetUI();
-            }
-        }
-        private async void BogoSort()
-        {
-            StartSort();
-
-            int n = array.Length;
-            int updateFrequency = Math.Max(1, (int)(n / (speedSlider.Value + 1)));
-            int operationCount = 0;
-
-            Random rnd = new Random();
-
-            while (!IsSorted(array))
-            {
-                if (abortSorting)
-                {
-                    ShuffleArray();
-                    DrawArray();
-                    ResetUI();
-                    return;
-                }
+                var focused = _vm.FocusedIndices.ToHashSet();
+                int finishedCount = _vm.FinishedProgress;
 
                 for (int i = 0; i < n; i++)
                 {
-                    int j = rnd.Next(i, n);
-                    int temp = array[i];
-                    array[i] = array[j];
-                    array[j] = temp;
+                    double barHeight = (data[i] / (double)maxVal) * height;
+                    if (barHeight < 1) barHeight = 1;
 
-                    operationCount++;
-                    if (operationCount % updateFrequency == 0)
-                    {
-                        Dispatcher.Invoke(() => UpdateCanvas(i, i + 1));
-                        await Task.Delay((int)speedSlider.Value / 2);
-                        Dispatcher.Invoke(() => UpdateCanvas(i, i + 1, resetColor: true));
-                    }
+                    double x = i * barWidth;
+                    double y = height - barHeight;
+
+                    StreamGeometryContext targetCtx;
+                    if (focused.Contains(i))
+                        targetCtx = rctx;
+                    else if (i < finishedCount)
+                        targetCtx = gctx;
+                    else
+                        targetCtx = bctx;
+
+                    targetCtx.BeginFigure(new Point(x, y), isFilled: true, isClosed: true);
+                    targetCtx.LineTo(new Point(x + barWidth, y), true, false);
+                    targetCtx.LineTo(new Point(x + barWidth, y + barHeight), true, false);
+                    targetCtx.LineTo(new Point(x, y + barHeight), true, false);
                 }
             }
 
-            if (!abortSorting)
-            {
-                DrawArray();
-                ResetUI();
-            }
-        }
+            blueGeom.Freeze();
+            greenGeom.Freeze();
+            redGeom.Freeze();
 
-        private bool IsSorted(int[] arr)
-        {
-            for (int i = 1; i < arr.Length; i++)
-            {
-                if (arr[i - 1] > arr[i])
-                    return false;
-            }
-            return true;
-        }
-
-        private async void QuickSort()
-        {
-            StartSort();
-            await QuickSortRecursive(array, 0, array.Length - 1);
-
-            if (!abortSorting)
-            {
-                DrawArray(); 
-                ResetUI();
-            }
-        }
-
-        private async Task QuickSortRecursive(int[] arr, int low, int high)
-        {
-            if (low < high)
-            {
-                int pi = await Partition(arr, low, high);
-
-                await QuickSortRecursive(arr, low, pi - 1);
-                await QuickSortRecursive(arr, pi + 1, high);
-            }
-        }
-
-        private async Task<int> Partition(int[] arr, int low, int high)
-        {
-            int pivot = arr[high];
-            int i = (low - 1);
-
-            for (int j = low; j <= high - 1; j++)
-            {
-                if (arr[j] < pivot)
-                {
-                    i++;
-                    int temp = arr[i];
-                    arr[i] = arr[j];
-                    arr[j] = temp;
-
-                    Dispatcher.Invoke(() => UpdateCanvas(i, j));
-                    await Task.Delay((int)speedSlider.Value / 2);
-                }
-
-                if (abortSorting)
-                {
-                    return -1; // Early exit if sorting is aborted
-                }
-            }
-
-            int temp1 = arr[i + 1];
-            arr[i + 1] = arr[high];
-            arr[high] = temp1;
-
-            Dispatcher.Invoke(() => UpdateCanvas(i + 1, high));
-            await Task.Delay((int)speedSlider.Value / 2);
-
-            return i + 1;
-        }
-
-        private void UpdateCanvas(int index1, int index2, bool resetColor = false)
-        {
-            double barWidth = arrayCanvas.ActualWidth / ArraySize;
-            double canvasHeight = arrayCanvas.ActualHeight;
-
-            for (int i = 0; i < ArraySize; i++)
-            {
-                Rectangle rect = (Rectangle)arrayCanvas.Children[i];
-                rect.Width = barWidth;
-                rect.Height = (array[i] / (double)ArraySize) * canvasHeight;
-
-                if ((i == index1 || i == index2) && !resetColor)
-                {
-                    rect.Fill = Brushes.Red;
-                }
-                else
-                {
-                    rect.Fill = Brushes.Blue;
-                }
-            }
+            _barsPath.Data = blueGeom;
+            _finishedPath.Data = greenGeom;
+            _focusedPath.Data = redGeom;
         }
     }
 }

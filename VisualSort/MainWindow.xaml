@@ -1,38 +1,46 @@
 ﻿<Window x:Class="VisualSort.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Sorting Visualizer">
-    <Grid>
+        xmlns:vm="clr-namespace:VisualSort.ViewModels"
+        Title="VisualSort" Height="700" Width="1050">
+    <Window.DataContext>
+        <vm:MainViewModel />
+    </Window.DataContext>
+
+    <Grid Background="DarkGray">
         <Grid.RowDefinitions>
-            <RowDefinition Height="*" />
-            <!-- Canvas area -->
             <RowDefinition Height="Auto" />
-            <!-- Buttons and controls area -->
+            <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- Viewbox to scale the Canvas -->
-        <Viewbox Grid.Row="0" Margin="10">
-            <Canvas Name="arrayCanvas" Background="White" Width="780" Height="300" />
-        </Viewbox>
+        <StackPanel Orientation="Horizontal" Margin="8" HorizontalAlignment="Left" Grid.Row="0" Background="DarkGray">
+            <ComboBox ItemsSource="{Binding SortingAlgorithms}"
+                      SelectedItem="{Binding SelectedAlgorithm}"
+                      Width="200" Margin="0,0,8,0" 
+                      VerticalContentAlignment="Center" />
+            <Button Content="Start" Command="{Binding StartCommand}" Margin="0,0,8,0" />
+            <Button Content="Shuffle" Command="{Binding ShuffleCommand}" Margin="0,0,8,0" />
+            <Button Content="Abort" Command="{Binding AbortCommand}" Margin="0,0,8,0" />
+            <TextBox Text="{Binding ArraySize, UpdateSourceTrigger=PropertyChanged}"
+                     Width="100" Margin="0,0,8,0" VerticalContentAlignment="Center"/>
+            <Button Content="Set Size" Command="{Binding SetArraySizeCommand}" Margin="0,0,16,0" />
 
-        <!-- StackPanel for buttons and controls -->
-        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10">
-            <Button Name="startButton" Content="Start" Width="75" Margin="0,0,10,0" Click="StartButton_Click"/>
-            <ComboBox Name="sortMethodComboBox" Width="120">
-                <ComboBoxItem Content="Bubble Sort"/>
-                <ComboBoxItem Content="Gnome Sort"/>
-                <ComboBoxItem Content="Cocktail Shaker Sort"/>
-                <ComboBoxItem Content="Radix Sort Base 10"/>
-                <ComboBoxItem Content="Radix Sort Base 4"/>
-                <ComboBoxItem Content="Comb Sort"/>
-                <ComboBoxItem Content="Bogo Sort"/>
-                <ComboBoxItem Content="Quick Sort"/>
-            </ComboBox>
-            <Slider Name="speedSlider" Width="200" Margin="10,0,0,0" Minimum="2" Maximum="100" Value="51"/>
-            <Button Name="shuffleButton" Content="Shuffle" Width="75" Margin="10,0,0,0" Click="ShuffleButton_Click"/>
-            <Button Name="abortButton" Content="Abort" Width="75" Margin="10,0,0,0" Click="AbortButton_Click"/>
-            <TextBox Name="arraySizeTextBox" Width="50" Margin="10,0,0,0" ToolTip="Enter array size"/>
-            <Button Name="setsize" Content="Set Size" Width="75" Margin="10,0,0,0" Click="SetArraySize_Click"/>
+            <TextBlock Text="Speed:" VerticalAlignment="Center" Margin="0,0,4,0"/>
+            <Slider Minimum="0" Maximum="100"
+                    TickFrequency="0.1" IsSnapToTickEnabled="False"
+                    SmallChange="0.1" LargeChange="1"
+                    Width="160" VerticalAlignment="Center"
+                    Value="{Binding Speed, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <TextBlock Text="Slow" Margin="4,0,4,0" VerticalAlignment="Center"/>
+            <TextBlock Text="->" Margin="4,0,4,0" VerticalAlignment="Center"/>
+            <TextBlock Text="Fast" Margin="4,0,16,0" VerticalAlignment="Center"/>
+
+            <CheckBox Content="Audio" IsChecked="{Binding AudioEnabled}" VerticalAlignment="Center"/>
         </StackPanel>
+
+        <Canvas x:Name="arrayCanvas"
+                Grid.Row="1"
+                Background="Black"
+                SnapsToDevicePixels="True" />
     </Grid>
 </Window>
