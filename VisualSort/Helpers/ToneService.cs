@@ -24,7 +24,8 @@ namespace VisualSort.Helpers
 
                 if (enabled)
                 {
-                    _provider.SetEnabled(true);
+                    // Keep silent until first UpdateValue sets the amplitude
+                    _provider.SetEnabled(false);
                     if (_output?.PlaybackState != PlaybackState.Playing)
                         _output?.Play();
                 }

@@ -183,6 +183,7 @@ namespace VisualSort.ViewModels
 
         public void StartSort() => RunOnUI(() =>
         {
+            _abortSorting = false; // reset abort flag at the start of a new sort
             IsSorting = true;
             FinishedProgress = 0; // reset any previous green overlay
         });
@@ -229,7 +230,7 @@ namespace VisualSort.ViewModels
         public void ResetUI() => RunOnUI(() =>
         {
             IsSorting = false;
-            _abortSorting = false;
+            // Do NOT reset _abortSorting here; it must remain true so we can skip the finish sequence after an abort.
             ClearFocus();
             ToneService.Silence(); // fade out when done
             DrawArray();
@@ -300,7 +301,12 @@ namespace VisualSort.ViewModels
                 await Task.Run(async () => await sortingAlgorithm.Sort(_array, this).ConfigureAwait(false)).ConfigureAwait(false);
             }
 
-            await RunFinishedSequenceAsync().ConfigureAwait(false);
+            // Skip end sequence when aborted
+            if (!_abortSorting)
+            {
+                await RunFinishedSequenceAsync().ConfigureAwait(false);
+            }
+
             ResetUI();
         }
 
